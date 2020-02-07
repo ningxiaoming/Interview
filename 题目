@@ -1,0 +1,522 @@
+1.hashcode相等两个类一定相等吗?equals呢?相反呢?
+    不一定，不一定。 相反则一定。
+    equals() 的作用是 用来判断两个对象是否相等。
+    equals() 定义在JDK的Object.java中。通过判断两个对象的地址是否相等(即，是否是同一个对象)来区分它们是否相等。源码如下：
+    public boolean equals(Object obj) {
+    return (this == obj);
+    }
+
+2.介绍一下集合框架?
+    List 可重复
+    Arraylist、底层数组、有序、查找快
+    linkedlist、底层链表、有序、增删块
+    CopyOnWriteArrayList、并发优化的ArrayList。用CopyOnWrite策略，在修改时先复制一个快照来修改，改完再让内部指针指向新数组。
+    如果更新频率较高，或数组较大时，还是Collections.synchronizedList(list)，对所有操作用同一把锁来保证线程安全更好。
+
+    Set 不可重复
+    HashSet、 不能保证顺序和插入一致
+    LinkedHashSet、 能保证顺序和插入一致
+    TreeSet、有自动排序的，也可以自定义排序。在元素类实现compareTo方法
+
+    Map
+    Hashmap基于哈希表的 Map 接口的实现并允许使用 null 值和 null 键
+    Treemap基于红黑树（Red-Black tree）的 NavigableMap 实现。根据创建映射时提供的 Comparator 进行排序，具体取决于使用的构造方法。
+
+3.hashmap hastable 底层实现什么区别?hashtable和concurrenthashtable呢?
+    1.8之前是数组+链表。JDK 1.8 中引入了 红黑树（查找时间复杂度为 O(logn)）来优化这个问题。引入TreeNode节点，当链表长度大于8时转换为红黑树。 
+     HashTable和HashMap的实现原理几乎一样，差别无非是1.HashTable不允许key和value为null；HashTable是线程安全的。
+     但是HashTable线程安全的策略实现代价却太大了，简单粗暴，get/put所有相关操作都是synchronized的，
+
+4.hashmap和treemap什么区别?低层数据结构是什么?
+    Hashmap基于哈希表的 Map 接口的实现并允许使用 null 值和 null 键
+    Treemap基于红黑树（Red-Black tree）的 NavigableMap 实现。根据创建映射时提供的 Comparator 进行排序，具体取决于使用的构造方法。
+
+5.线程池用过吗都有什么参数?底层如何实现的?
+    corePoolSize  初始化核心线程数
+    maxPoolSize当线程数大于或等于核心线程，且任务队列已满时，线程池会创建新的线程，直到线程数量达到maxPoolSize。
+     如果线程数已等于maxPoolSize，且任务队列已满，则已超出线程池的处理能力，线程池会拒绝处理任务而抛出异常。
+    keepAliveTime 当线程空闲时间达到keepAliveTime，该线程会退出，直到线程数量等于corePoolSize。
+    allowCoreThreadTimeout 是否允许核心线程空闲退出，默认值为false。
+    queueCapacity任务队列容量
+    任务队列的长度要根据核心线程数，以及系统对任务响应时间的要求有关。队列长度可以设置为(corePoolSize/tasktime)*responsetime：
+     (20/0.1)*2=400，即队列长度可设置为400。
+    队列长度设置过大，会导致任务响应时间过长，切忌以下写法：
+     LinkedBlockingQueue queue = new LinkedBlockingQueue();
+     这实际上是将队列长度设置为Integer.MAX_VALUE，将会导致线程数量永远为corePoolSize，再也不会增加，当任务数量陡增时，任务响应时间也将随之陡增。
+
+
+6.synchronized和Lock什么区别?synchronized什么情况情况是对象锁? 什么时候是全局锁为什么?
+    Synchronized 重量级悲观锁，自动释放，变量锁，方发锁，代码块都行。
+    Lock 轻量级锁，需要自己释放。代码块锁。
+    synchronized在单个实例类是对象锁，在static下是全局锁。
+7.ThreadLocal 是什么？底层如何实现?写一个例子呗?
+    ThreadLocal是一个解决线程并发问题的一个类，用于创建线程的本地变量，我们知道一个对象的所有线程会共享它的全局变量，
+    所以这些变量不是线程安全的，我们可以使用同步技术。但是当我们不想使用同步的时候，我们可以选择ThreadLocal变量。
+
+    每个线程都会拥有他们自己的Thread变量，他们可以使用get/set方法去获取他们的默认值或者在线程内部改变他们的值。
+    ThreadLocal实例通常是希望他们同线程状态关联起来是private static属性。
+
+    最常见的ThreadLocal使用场景为 用来解决 数据库连接、Session管理等。
+
+    底层实现主要是存有一个map，以线程作为key，泛型作为value，可以理解为线程级别的缓存。每一个线程都会获得一个单独的map。
+8.volitile的工作原理?
+    可见性，将修改的变量立即刷入主内存，其他获得此变量的方法需要重新获取，不适用需要自身作为变化的变量，
+9.cas知道吗如何实现的?
+Conmpare And Swap，是CPU指令级的操作，只有一步原子操作，所以非常快。
+在操作完事后拿初始值和现在的值进行对比，如果一直代表没有变化，则返回结果。否则循环。
+10.请用至少四种写法写一个单例模式?
+public class Singleton{
+    private static Singleton uniqueInstance = null;
+public static synchronized Singleton getInstance(){
+        if(uniqueInstance == null){
+                        uniqueInstance = new Singleton();
+        }
+        return uniqueInstance;
+}
+}
+
+
+public class Singleton {
+    private volatile static Singleton instance = null;
+    private Singleton(){
+    }
+    public static Singleton getInstance(){
+        if(instance == null){
+            synchronized(Singleton.class){
+                if(instance == null){
+                    instance = new Singleton();
+                }
+            }
+        }
+        return instance;
+    }
+}
+
+
+public class Singleton {
+    private static Singleton instance = new Singleton();
+    private Singleton(){
+    }
+    public static Singleton getInstance(){
+        return instance;
+    }
+}
+
+推荐第四种 将懒加载和线程安全完美结合的一种方式（无锁）。（推荐）
+public class Singleton {
+    /**
+     * 类级的内部类，也就是静态的成员式内部类，该内部类的实例与外部类的实例
+     * 没有绑定关系，而且只有被调用到才会装载，从而实现了延迟加载
+     */
+    private static class SingletonHolder{
+        /**
+         * 静态初始化器，由JVM来保证线程安全
+         */
+        private static Singleton instance = new Singleton();
+    }
+    /**
+     * 私有化构造方法
+     */
+    private Singleton(){
+    }
+    public static  Singleton getInstance(){
+        return SingletonHolder.instance;
+    }
+}
+11.请介绍一下JVM内存模型??用过什么垃圾回收器都说说呗
+类加载器(classloader) + 执行引擎(execution engine) + 运行时数据区域(runtime data area)
+等待记录
+12.线上发送频繁full gc如何处理? CPU 使用率过高怎么办?
+常见full gc原因
+1.使用了大对象 //大对象会直接进入老年代
+2.在程序中长期持有了对象的引用 //对象年龄达到指定阈值也会进入老年代
+可在线上开启XX:+HeapDumpBeforeFullGC。检测
+Sql语句过长（批量入库），或者druid连接池开启了sql监控会导致full gc。
+
+Cpu过高检测方法：https://blog.csdn.net/luzhensmart/article/details/83450481
+常见原因可能是mysql全表扫描得问题。或者javaGC问题或者死锁 死循环。
+
+13.如何定位问题?如何解决说一下解决思路和处理方法
+祥见https://www.cnblogs.com/yuzhengzhong/p/9845704.html
+14.知道字节码吗?字节码都有哪些?Integer x =5,int y =5，比较x =y 都经过哪些步骤?
+15.讲讲类加载机制呗都有哪些类加载器，这些类加载器都加载哪些文件?
+Java语言系统自带有三个类加载器: 
+- Bootstrap ClassLoader 最顶层的加载类，主要加载核心类库，%JRE_HOME%\lib下的rt.jar、resources.jar、charsets.jar和class等。另外需要注意的是可以通过启动jvm时指定-Xbootclasspath和路径来改变Bootstrap ClassLoader的加载目录。比如java -Xbootclasspath/a:path被指定的文件追加到默认的bootstrap路径中。我们可以打开我的电脑，在上面的目录下查看，看看这些jar包是不是存在于这个目录。 
+- Extention ClassLoader 扩展的类加载器，加载目录%JRE_HOME%\lib\ext目录下的jar包和class文件。还可以加载-D java.ext.dirs选项指定的目录。 
+- Appclass Loader也称为SystemAppClass 加载当前应用的classpath的所有类。
+16.手写一下类加载Demo
+public class TestGC {
+    public static void main(String []args){
+        System.out.println(TestGC.class.getClassLoader().toString());
+        
+        System.out.println(TestGC.class.getClassLoader().getParent().toString());
+   System.out.println(TestGC.class.getClassLoader().getParent().getParent().toString());
+    }
+}
+（1）首先会到自定义加载器中查找，看是否已经加载过，如果已经加载过，则返回字节码。
+　　（2）如果自定义加载器没有加载过，则询问上一层加载器(即AppClassLoader)是否已经加载过Test.class。
+　　（3）如果没有加载过，则询问上一层加载器（ExtClassLoader）是否已经加载过。
+　　（4）如果没有加载过，则继续询问上一层加载（BoopStrap ClassLoader）是否已经加载过。
+　　（5）如果BoopStrap ClassLoader依然没有加载过，则到自己指定类加载路径下（"sun.boot.class.path"）查看是否有Test.class字节码，有则返回，没有通
+知下一层加载器ExtClassLoader到自己指定的类加载路径下（java.ext.dirs）查看。
+　　（6）依次类推，最后到自定义类加载器指定的路径还没有找到Test.class字节码，则抛出异常ClassNotFoundException。
+17.知道osgi吗? 他是如何实现的???
+OSGI全称为Open Service Gateway Initiative（开放服务网关规范
+OSGi服务平台提供在多种网络设备上无需重启的动态改变构造的功能
+17.请问你做过哪些JVM优化?使用什么方法达到什么效果???
+https://blog.csdn.net/wuzhilon88/article/details/49201891
+19.classforName("java.lang.String")和String classgetClassLoader() LoadClass("java.lang.String") 什么区别啊?
+class.forName()前者除了将类的.class文件加载到jvm中之外，还会对类进行解释，执行类中的static块。
+而classLoader只干一件事情，就是将.class文件加载到jvm中，不会执行static中的内容,只有在newInstance才会去执行static块
+20.探查Tomcat的运行机制即框架？
+21.分析Tomcat线程模型？
+22.Tomcat系统参数认识和调优？
+23.MySQL底层B+Tree机制？
+https://blog.csdn.net/majiawenzzz/article/details/81098870
+24.SQL执行计划详解？
+table | type | possible_keys | key | key_len | ref | rows | Extra
+table 
+显示这一行的数据是关于哪张表的
+type 
+这是重要的列，显示连接使用了何种类型。从最好到最差的连接类型为const、eq_reg、ref、range、indexhe和ALL
+possible_keys 
+显示可能应用在这张表中的索引。如果为空，没有可能的索引。可以为相关的域从WHERE语句中选择一个合适的语句
+key 
+实际使用的索引。如果为NULL，则没有使用索引。很少的情况下，MYSQL会选择优化不足的索引。这种情况下，可以在SELECT语句中使用USE INDEX（indexname）来强制使用一个索引或者用IGNORE INDEX（indexname）来强制MYSQL忽略索引
+key_len 
+使用的索引的长度。在不损失精确性的情况下，长度越短越好
+ref 
+显示索引的哪一列被使用了，如果可能的话，是一个常数
+rows 
+MYSQL认为必须检查的用来返回请求数据的行数
+
+25.索引优化详解？
+B树索引
+1、全值匹配的查询
+2、匹配最左前缀的查询
+3、匹配列前缀查询
+4、匹配范围值的查找
+5、精确匹配左前列并范围匹配另外一列
+6、只访问索引的查询
+Hash索引
+1、Hash索引是基于Hash表实现的，只有查询条件精确匹配Hash索引中的所有列时，才能够使用到hash索引
+2、对于Hash索引中的所有列，存储引擎都会为每一行计算一个Hash码，Hash索引中存储的就是Hash码
+为啥要使用索引
+1、索引大大减少了存储引擎需要扫描的数据量
+2、索引可以帮助我们进行排序以比喵使用临时表的IO消耗，提升MySQL的能力
+3、索引可以把随机I/O变为顺序I/O
+注意：索引过多增加写操作的成本，增加查询优化器的选择时间
+
+26.SQL语句如如如何优化？
+1.’对查询进行优化，应尽量避免全表扫描，首先应考虑在 where 及 order by 涉及的列上建立索引。
+2.应尽量避免在 where 子句中使用!=或<>操作符，否则将引擎放弃使用索引而进行全表扫描。
+3.应尽量避免在 where 子句中对字段进行 null 值判断，否则将导致引擎放弃使用索引而进行全表扫描，如：
+select id from t where num is null
+可以在num上设置默认值0，确保表中num列没有null值，然后这样查询：
+select id from t where num=0
+4.应尽量避免在 where 子句中使用 or 来连接条件，否则将导致引擎放弃使用索引而进行全表扫描，如：
+select id from t where num=10 or num=20
+可以这样查询：
+select id from t where num=10
+union all
+select id from t where num=20
+5.下面的查询也将导致全表扫描：
+select id from t where name like '%abc%'
+若要提高效率，可以考虑全文检索。
+6.in 和 not in 也要慎用，否则会导致全表扫描，如：
+select id from t where num in(1,2,3)
+对于连续的数值，能用 between 就不要用 in 了：
+select id from t where num between 1 and 3
+7.如果在 where 子句中使用参数，也会导致全表扫描。因为SQL只有在运行时才会解析局部变量，但优化程序不能将访问计划的选择推迟到运行时；它必须在编译时进行选择。然而，如果在编译时建立访问计划，变量的值还是未知的，因而无法作为索引选择的输入项。如下面语句将进行全表扫描：
+select id from t where num=@num
+可以改为强制查询使用索引：
+select id from t with(index(索引名)) where num=@num
+8.应尽量避免在 where 子句中对字段进行表达式操作，这将导致引擎放弃使用索引而进行全表扫描。如：
+select id from t where num/2=100
+应改为:
+select id from t where num=100*2
+9.应尽量避免在where子句中对字段进行函数操作，这将导致引擎放弃使用索引而进行全表扫描。如：
+select id from t where substring(name,1,3)='abc'--name以abc开头的id
+select id from t where datediff(day,createdate,'2005-11-30')=0--'2005-11-30'生成的id
+应改为:
+select id from t where name like 'abc%'
+select id from t where createdate>='2005-11-30' and createdate<'2005-12-1'
+10.不要在 where 子句中的“=”左边进行函数、算术运算或其他表达式运算，否则系统将可能无法正确使用索引。
+11.在使用索引字段作为条件时，如果该索引是复合索引，那么必须使用到该索引中的第一个字段作为条件时才能保证系统使用该索引，否则该索引将不会被使用，并且应尽可能的让字段顺序与索引顺序相一致。
+12.不要写一些没有意义的查询，如需要生成一个空表结构：
+select col1,col2 into #t from t where 1=0
+这类代码不会返回任何结果集，但是会消耗系统资源的，应改成这样：
+create table #t(...)
+13.很多时候用 exists 代替 in 是一个好的选择：
+select num from a where num in(select num from b)
+用下面的语句替换：
+select num from a where exists(select 1 from b where num=a.num)
+14.并不是所有索引对查询都有效，SQL是根据表中数据来进行查询优化的，当索引列有大量数据重复时，SQL查询可能不会去利用索引，如一表中有字段sex，male、female几乎各一半，那么即使在sex上建了索引也对查询效率起不了作用。
+15.索引并不是越多越好，索引固然可以提高相应的 select 的效率，但同时也降低了 insert 及 update 的效率，因为 insert 或 update 时有可能会重建索引，所以怎样建索引需要慎重考虑，视具体情况而定。一个表的索引数最好不要超过6个，若太多则应考虑一些不常使用到的列上建的索引是否有必要。
+16.应尽可能的避免更新 clustered 索引数据列，因为 clustered 索引数据列的顺序就是表记录的物理存储顺序，一旦该列值改变将导致整个表记录的顺序的调整，会耗费相当大的资源。若应用系统需要频繁更新 clustered 索引数据列，那么需要考虑是否应将该索引建为 clustered 索引。
+17.尽量使用数字型字段，若只含数值信息的字段尽量不要设计为字符型，这会降低查询和连接的性能，并会增加存储开销。这是因为引擎在处理查询和连接时会逐个比较字符串中每一个字符，而对于数字型而言只需要比较一次就够了。
+18.尽可能的使用 varchar/nvarchar 代替 char/nchar ，因为首先变长字段存储空间小，可以节省存储空间，其次对于查询来说，在一个相对较小的字段内搜索效率显然要高些。
+19.任何地方都不要使用 select * from t ，用具体的字段列表代替“*”，不要返回用不到的任何字段。
+20.尽量使用表变量来代替临时表。如果表变量包含大量数据，请注意索引非常有限（只有主键索引）。
+21.避免频繁创建和删除临时表，以减少系统表资源的消耗。
+22.临时表并不是不可使用，适当地使用它们可以使某些例程更有效，例如，当需要重复引用大型表或常用表中的某个数据集时。但是，对于一次性事件，最好使用导出表。
+23.在新建临时表时，如果一次性插入数据量很大，那么可以使用 select into 代替 create table，避免造成大量 log ，以提高速度；如果数据量不大，为了缓和系统表的资源，应先create table，然后insert。
+24.如果使用到了临时表，在存储过程的最后务必将所有的临时表显式删除，先 truncate table ，然后 drop table ，这样可以避免系统表的较长时间锁定。
+25.尽量避免使用游标，因为游标的效率较差，如果游标操作的数据超过1万行，那么就应该考虑改写。
+26.使用基于游标的方法或临时表方法之前，应先寻找基于集的解决方案来解决问题，基于集的方法通常更有效。
+27.与临时表一样，游标并不是不可使用。对小型数据集使用 FAST_FORWARD 游标通常要优于其他逐行处理方法，尤其是在必须引用几个表才能获得所需的数据时。在结果集中包括“合计”的例程通常要比使用游标执行的速度快。如果开发时间允许，基于游标的方法和基于集的方法都可以尝试一下，看哪一种方法的效果更好。
+28.在所有的存储过程和触发器的开始处设置 SET NOCOUNT ON ，在结束时设置 SET NOCOUNT OFF 。无需在执行存储过程和触发器的每个语句后向客户端发送 DONE_IN_PROC 消息。
+29.尽量避免向客户端返回大数据量，若数据量过大，应该考虑相应需求是否合理。
+30.尽量避免大事务操作，提高系统并发能力。
+
+27.spring都有哪些机制啊AOP底层如何实现的啊IOC呢??
+控制反转IOC 面向切面AOP
+  AOP的源码中用到了两种动态代理来实现拦截切入功能：jdk动态代理和cglib动态代理。两种方法同时存在，各有优劣。jdk动态代理是由java内部的反射机制来实现的，cglib动态代理底层则是借助asm来实现的。
+
+IOC  反射与工厂模式
+
+28.cgLib知道吗?他和jdk动态代理什么区别?手写一个jdk动态代理呗?
+CGLiB动态代理
+利用ASM开源包，对代理对象类的class文件加载进来，通过修改其字节码生成子类来处理。
+JDK动态代理
+利用拦截器(拦截器必须实现InvocationHanlder)加上反射机制生成一个实现代理接口的匿名类，在调用具体方法前调用InvokeHandler来处理。
+Jdk8之后，jdk的动态代理效率高于cglib
+https://blog.csdn.net/qq_41790443/article/details/80552115
+29.使用mysq1索引都有哪些原则? ?索引什么数据结构? 3+tree 和B tree 什么区别?
+1．选择唯一性索引
+2．为经常需要排序、分组和联合操作的字段建立索引
+3．为常作为查询条件的字段建立索引
+4．限制索引的数目
+5．尽量使用数据量少的索引
+6．尽量使用前缀来索引
+7．删除不再使用或者很少使用的索引
+8．小表不应建立索引；包含大量的列并且不需要搜索非空值的时候可以考虑不建索引
+
+索引的数据结构：B-、B+、R-、散列
+30.MySQL有哪些存储引擎啊?都有啥区别? 要详细!
+1、InnoDB存储引擎
+InnoDB是事务型数据库的首选引擎，支持事务安全表（ACID），其它存储引擎都是非事务安全表，支持行锁定和外键，MySQL5.5以后默认使用InnoDB存储引擎。
+InnoDB特点： 支持事务处理，支持外键，支持崩溃修复能力和并发控制。如果需要对事务的完整性要求比较高（比如银行），要求实现并发控制（比如售票），那选择InnoDB有很大的优势。
+如果需要频繁的更新、删除操作的数据库，也可以选择InnoDB，因为支持事务的提交（commit）和回滚（rollback）。
+2、MyISAM存储引擎 
+MyISAM基于ISAM存储引擎，并对其进行扩展。它是在Web、数据仓储和其他应用环境下最常使用的存储引擎之一。MyISAM拥有较高的插入、查询速度，但不支持事务，不支持外键。
+MyISAM特点： 插入数据快，空间和内存使用比较低。如果表主要是用于插入新记录和读出记录，那么选择MyISAM能实现处理高效率。如果应用的完整性、并发性要求比较低，也可以使用
+3、MEMORY存储引擎 
+MEMORY存储引擎将表中的数据存储到内存中，为查询和引用其他表数据提供快速访问。
+MEMORY特点： 所有的数据都在内存中，数据的处理速度快，但是安全性不高。如果需要很快的读写速度，对数据的安全性要求较低，可以选择MEMOEY。
+它对表的大小有要求，不能建立太大的表。所以，这类数据库只使用在相对较小的数据库表。
+
+30.设计高并发系统数据库层面该怎么设计??数据库锁有哪些类型?如何实现呀?
+1.分库分表，2的倍数扩容。
+根据uid计算数据库编号：
+数据库编号 = (uid / 10) % 数据库个数 + 1
+根据uid计算表编号：
+表编号 = uid % 分表个数
+2.主从-LVS控制数据库连接
+排他锁、共享锁、更新锁。 
+31.数据库事务有哪些?
+1．隐式事务是指每一条数据操作语句都自动地成为一个事务，事务的开始是隐式的，事务的结束有明确的标记。
+2．显式事务是指有显式的开始和结束标记的事务，每个事务都有显式的开始和结束标记。
+3．自动事务是系统自动默认的，开始和结束不用标记。
+
+32.如何设计可以动态扩容缩容的分库分表方案?
+Snowflake的时间戳分库分表，但是有热点问题
+或者采用预先32库32表，扩容缩容只需要移动表和库，不需要重新导数据，但是对小公司不适用
+33.用过哪些分库分表中间件，有啥优点和缺点?讲一下你了解的分库分表中间件的底层实现原理?
+Mycat和sharding-jdbc。  一个是单独中间件，一个是jar包实现。Mycat作为一个中间层，对client透明，把sql在解析后发放至实例数据库。Sharding-jdbc直接在应用层改写sql，性能较高。但是两者相对于直连DB，都有部分复杂sql无法实现。
+34.我现在有一个未分库分表的系统，以后系统需分库分表，如何设计，让未分库分表的系统动态切换到分库分表的系统上?TCC? 那若出现网络原因，网络连不通怎么办啊?
+如果按时间分，直接热更新代码即可。  其他算法分库分表，可采用双写，同时让数据写入老库和新库，然后同时迁移老库，数据校验。当然也可以停机迁移
+35.分布式事务知道吗? 你们怎么解决的?
+分布式事务是指在分布式情况下的事务问题，单机的ACID在分布式模式下实现不了，分布式事务遵从CAP理论，三者满足其二
+一致性(Consistency) ： 客户端知道一系列的操作都会同时发生(生效)
+可用性(Availability) ： 每个操作都必须以可预期的响应结束
+分区容错性(Partition tolerance) ： 即使出现单个组件无法可用,操作依然可以完成
+BASE理论
+Basically Available（基本可用）
+Soft state（软状态）
+Eventually consistent（最终一致性）
+BASE理论是对CAP中的一致性和可用性进行一个权衡的结果，理论的核心思想就是：我们无法做到强一致，但每个应用都可以根据自身的业务特点，采用适当的方式来使系统达到最终一致性（Eventual consistency）。
+
+解决方案：
+一、两阶段提交（2PC）
+第一阶段：事务协调器要求每个涉及到事务的数据库预提交(precommit)此操作，并反映是否可以提交.
+第二阶段：事务协调器要求每个数据库提交数据。
+优点： 尽量保证了数据的强一致，适合对数据强一致要求很高的关键领域。（其实也不能100%保证强一致）
+缺点： 实现复杂，牺牲了可用性，对性能影响较大，不适合高并发高性能场景。
+二、补偿事务（TCC）
+Try 阶段主要是对业务系统做检测及资源预留
+Confirm 阶段主要是对业务系统做确认提交，Try阶段执行成功并开始执行 Confirm阶段时，默认 Confirm阶段是不会出错的。即：只要Try成功，Confirm一定成功。
+Cancel 阶段主要是在业务执行错误，需要回滚的状态下执行的业务取消，预留资源释放。
+优点： 跟2PC比起来，实现以及流程相对简单了一些，但数据的一致性比2PC也要差一些
+缺点： 缺点还是比较明显的，在2,3步中都有可能失败。TCC属于应用层的一种补偿方式，所以需要程序员在实现的时候多写很多补偿的代码，在一些场景中，一些业务流程可能用TCC不太好定义及处理。
+三、本地消息表（异步确保）
+
+优点： 一种非常经典的实现，避免了分布式事务，实现了最终一致性。
+缺点： 消息表会耦合到业务系统中，如果没有封装好的解决方案，会有很多杂活需要处理。
+
+
+36.为什么要分库分表啊?
+单库单表的数据量太大的时候，mysql的操作算法会有大量的IO操作，对CPU和磁盘的压力巨大，当单机达到限制的时候就需要分库分表。一般建议超过500W的数据再考虑
+37.RPC通信原理，分布式通信原理
+采用长连接绑定生产者和消费者，让其中间进行数据传输。
+39.分布式寻址方式都有哪些算法？知道一致性hash吗?手写一下java实现代码??你若userId取摸分片，那我要查一段连续时间里的数据怎么办???
+40.如何解决分库分表主键问题有什么实现方案??
+分库分表之后肯定无法采用数据库自增。一般采用snowflake 或者 UUID等。
+41.redis和memcheched 什么区别为什么单线程的redis比多线程的memched效率要高啊?
+Redis性能的优势不是因为单线程，而是因为多路复用等特性。  如果合理解决多线程竞争CPU资源和锁的使用，也许多线程更快、
+42.redis有什么数据类型都在哪些场景下使用啊?
+String、hash、zest、List、set。  合理运用。。
+43.reids的主从复制是怎么实现的redis的集群模式是如何实现的呢？redis的key是如何寻址的啊?
+全量同步：另开线程生成RDB同步。
+部分同步：根据上次同步标识，找到之后的日志指令进行同步。
+redis cluster集群，3.0版本之后开始支持。
+Redis内部通信互联各个master，每个master负责一部分数据，对任意一个master进行新增和操作。每个master可以搭配多个salve，进行哨兵模式的切换。
+寻址算法
+hash 算法（大量缓存重建）
+一致性 hash 算法（自动缓存迁移）+ 虚拟节点（自动负载均衡）
+redis cluster 的 hash slot 算法
+
+44.使用redis如何设计分布式锁?使用zk可以吗?如何实现啊这两种哪个效率更高啊??
+可以，redis效率高。Redis分布式锁，在redis建立一个key，和一个随机value。外加一个超时时间。  解锁的时候需要判断value，是不是自己创建的锁。
+45.知道redis的持久化吗都有什么缺点优点啊? ?具体底层实现呢?
+优点，数据不容易丢失，在异常情况下。  缺点，影响性能。   RDB和AOF方式。 RDB启动快。
+46.redis过期策略都有哪些LRU 写一下java版本的代码吧??
+定期删除，定时删除，惰性删除。
+47.说一下dubbo的实现过程注册中心挂了可以继续通信吗??
+可以继续通过本地缓存通信
+48.dubbo支持哪些序列化协议?hessian 说一下hessian的数据结构?PB知道吗为啥PB效率是最高的啊??
+dubbo实际基于不同的通信协议，支持hessian、java二进制序列化、json、SOAP文本序列化多种序列化协议。
+但是hessian是其默认的序列化协议。
+Hessian
+原始二进制数据
+boolean
+64-bit date（64 位毫秒值的日期）
+64-bit double
+32-bit int
+64-bit long
+null
+UTF-8 编码的 string
+另外还包括 3 种递归类型：
+list for lists and arrays
+map for maps and dictionaries
+object for objects
+PB:protoctl buffer,效率最高，采用proto 编译器，去key编译，体积小。
+49.知道netty吗'netty可以干嘛呀NIO,BIO,AIO 都是什么啊有什么区别啊?
+一个nio的框架，简化和优化了javanio的api。
+IO通信模式。BIO同步阻塞，NIO同步非阻塞。AIO异步非阻塞
+BIO是一个连接一个线程。
+NIO是一个请求一个线程。
+AIO是一个有效请求一个线程。
+
+50.dubbo复载均衡策略和高可用策略都有哪些啊动态代理策略呢?
+负载策略：权重，hash，轮训，最小活跃
+高可用：集群痛锉
+51.为什么要进行系统拆分啊拆分不用dubbo可以吗'dubbo和thrift什么区别啊?
+节省开发时的交流成本和维护成本。可以。 
+52.为什么使用消息队列啊消息队列有什么优点和缺点啊?
+优点：解耦，异步，消峰
+缺点：
+系统可用性降低
+系统复杂性增加
+
+53.如何保证消息队列的高可用啊？如何保证消息不被重复消费啊
+Rabbit镜像集群模式 kafka副本选举机制。   MQ内部有msgid机制去重，但是网络原因可能造成幂等性问题，需要消费者对每条消息做一个ID判断是否消费过。   针对消费者有幂等性需求的
+54.kafka ，activemq,rabbitmq ，rocketmq都有什么优点，缺点啊???
+Rabbitmq，功能相对完善，有界面。    kafaka会有数据丢失，不是百分百送达，rocketmq QPS高。
+activeMQ、rabbitMQ与 kafka、rocketMQ有很大的区别就是前2个只支持主从模式，后2个是分布式消息系统，支持分布式。
+ 1-RabbitMq比kafka成熟，在可用性上，稳定性上，可靠性上，RabbitMq超过kafka
+ 2-Kafka设计的初衷就是处理日志的，可以看做是一个日志系统，针对性很强，所以它并没有具备一个成熟MQ应该具备的特性
+ 3-Kafka的性能（吞吐量、tps）比RabbitMq要强
+
+55.如果让你写一个消息队列，该如何进行架构设计啊?说一下你的思路。
+基于disruptor和netty设置的socket通信，编解码协议用PB。兼容集群配置，记录操作指令复制同步。兼容路由和负载均衡。
+
+56.说一下TCP 'IP四层?
+1、主机到网络层　　
+　　实际上TCP/IP参考模型没有真正描述这一层的实现，只是要求能够提供给其上层-网络互连层一个访问接口，以便在其上传递IP分组。由于这一层次未被定义，所以其具体的实现方法将随着网络类型的不同而不同。　　
+　　2、网络互连层　　
+　　网络互连层是整个TCP/IP协议栈的核心。它的功能是把分组发往目标网络或主机。同时，为了尽快地发送分组，可能需要沿不同的路径同时进行分组传递。因此，分组到达的顺序和发送的顺序可能不同，这就需要上层必须对分组进行排序。　　
+　　网络互连层定义了分组格式和协议，即IP协议（Internet Protocol）。　　
+　　网络互连层除了需要完成路由的功能外，也可以完成将不同类型的网络（异构网）互连的任务。除此之外，网络互连层还需要完成拥塞控制的功能。　　
+　　3、传输层　　
+　　在TCP/IP模型中，传输层的功能是使源端主机和目标端主机上的对等实体可以进行会话。在传输层定义了两种服务质量不同的协议。即：传输控制协议TCP（transmission control protocol）和用户数据报协议UDP（user datagram protocol）。　　
+　　TCP协议是一个面向连接的、可靠的协议。它将一台主机发出的字节流无差错地发往互联网上的其他主机。在发送端，它负责把上层传送下来的字节流分成报文段并传递给下层。在接收端，它负责把收到的报文进行重组后递交给上层。TCP协议还要处理端到端的流量控制，以避免缓慢接收的接收方没有足够的缓冲区接收发送方发送的大量数据。　　
+　　UDP协议是一个不可靠的、无连接协议，主要适用于不需要对报文进行排序和流量控制的场合。　　
+　　4、应用层　　
+　　TCP/IP模型将OSI参考模型中的会话层和表示层的功能合并到应用层实现。　　
+　　应用层面向不同的网络应用引入了不同的应用层协议。其中，有基于TCP协议的，如文件传输协议（File Transfer Protocol，FTP）、虚拟终端协议（TELNET）、超文本链接协议（Hyper Text Transfer Protocol，HTTP），也有基于UDP协议的。
+57.的工作流程?? ?http1.0 http1.1http2.0 具体哪些区别啊?
+https://www.cnblogs.com/heluan/p/8620312.html
+57.TCP三次握手，四层分手的工作流程画一下流程图为什么不是四次五次或者二次啊?
+
+
+握手：1.能收到我发消息吗。  2. 我能收到，你能收到我的吗。 3.我也能收到。
+挥手：1.我没话说了  2.OK，我知道了。  3.那我关闭了？   4.好
+58.画一下https的工作流程?具体如何实现啊?如何防止被抓包啊??
+
+59.源码中所用到的经典设计思想及常用设计模式
+1.工厂模式：静态方法动态获取实例。
+2.单例模式：饿汉模式，懒汉模式
+3.建造者模式： set属性返回this。
+4.原型模式: 实现Cloneable进行对象浅拷贝。
+5.适配器模式：  类适配：创建新类，继承源类，并实现新接口，例如  class  adapter extends oldClass  implements newFunc{}
+6.代理模式： 实现相同接口，A类中去调用B类的方法，并加上扩展的方法。
+61.系统架构如何选择合适日志技术（log4j、log4j2、slf4j、jcl…….）
+如果是开发中间件或者框架，采用slf4j，导入时会根据具体日志选型自己转换。  其他的简单springboot应用采用默认的logback,高并发日志系统下用log4j2 ，性能好
+关于log4j2的新特性
+丢数据这种情况少，可以用来做审计功能。而且自身内部报的exception会被发现，但是logback和log4j不会。
+log4j2使用了disruptor技术，在多线程环境下，性能高于logback等10倍以上。
+(garbage free）之前的版本会产生非常多的临时对象，会造成GC频繁，log4j2则在这方面上做了优化，减少产生临时对象。尽可能少的GC
+利用插件系统，使得扩展新的appender,filter,layout等变得容易，log4j不可以扩展 插件？？？？
+因为插件系统的简单性，所以在配置的时候，可以不用具体指定所要处理的类型。class
+可以自定义level
+Java 8 lambda support for lazy logging
+Support for Message objects
+对filter的功能支持的更强大
+系统日志(Syslog)协议supports both TCP and UDP
+利用jdk1.5并发的特性，减少了死锁的发生。
+Socket LogEvent SerializedLayout
+支持kafka queue
+
+62.springAOP的原理，springAOP和Aspectj的关系，springAOP的源码问题
+63.dubbo框架的底层通信原理
+64.RPC通信原理，分布式通信原理
+ 一次RPC调用的过程大概有10步：
+　　1.执行客户端调用语句，传送参数
+　　2.调用本地系统发送网络消息
+　　3.消息传送到远程主机
+　　4.服务器得到消息并取得参数 
+　　5.根据调用请求以及参数执行远程过程（服务）
+　　6.执行过程完毕，将结果返回服务器句柄
+　　7.服务器句柄返回结果，调用远程主机的系统网络服务发送结果
+　　8.消息传回本地主机 
+　　9.客户端句柄由本地主机的网络服务接收消息
+　　10.客户端接收到调用语句返回的结果数据
+
+RPC：面向过程的远程调用，不支持面向对象
+RMI：用java语言实现了RPC协议，支持对象传输。JDK内部提供。
+JMS：利用中间件通信
+Web Service：跨平台，传输的数据位XML、json等格式的数据，应用范围广。
+65.如何利用springCloud来架构微服务项目
+Feign 和eruake，restful通信
+66.如何正确使用docker技术
+67.springMVC的底层原理、如何从源码来分析其原理
+
+68.mybaits的底层实现原理，如何从源码来分析mybaits
+69.mysql的索引原理，索引是怎么实现的
+70.索引的底层算法、如何正确使用、优化索引
+B+Tree
+1．选择唯一性索引
+2．为经常需要排序、分组和联合操作的字段建立索引
+3．为常作为查询条件的字段建立索引
+4．限制索引的数目
+5．尽量使用数据量少的索引
+6．尽量使用前缀来索引
+7．删除不再使用或者很少使用的索引
+8．小表不应建立索引；包含大量的列并且不需要搜索非空值的时候可以考虑不建索引
+
+71.springboot如何快速构建系统
+配置文件，启动main，A S D
+72.zk原理知道吗zk都可以干什么Paxos算法知道吗?说一下原理和实现?
+
+

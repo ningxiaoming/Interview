@@ -1,0 +1,165 @@
+****************************es学习********************
+************day1************
+PUT /test1/type1/1
+{
+  "name": "你好",
+  "age":  3
+}
+
+PUT /test2
+{
+  "mappings": {
+    "properties": {
+      "name": {
+        "type": "text"
+      },
+      "age":  {
+        "type": "long"
+      },
+      "birthday": {
+        "type": "date"
+      }
+    }
+  }
+}
+
+PUT /test3/_doc/1
+{
+  "name": "宁小明12",
+  "age":  13,
+  "birth":  "1997-01-02"
+}
+
+POST /test3/_doc/1/_update
+{
+  "doc":  {
+    "name": "张三啊"
+  }
+}
+
+DELETE test1
+
+GET test3
+
+GET _cat/indices?v
+
+*****************day2**********
+*****添加数据****
+PUT /xm/user/1
+{
+  "name": "小明",
+  "age":  18,
+  "desc": "帅的一塌糊涂",
+  "tags": ["直男","技术宅","垃圾"]
+}
+******更新某个字段*****
+POST xm/user/3/_update
+{
+  "doc":{
+    "name": "去去去"
+  }
+}
+
+******复杂搜索*****
+
+GET xm/user/_search
+{
+  "query": {
+    "match": {
+      "name": "李四"
+    }
+  },
+//需要查询的字段集合
+  "_source": ["name","desc"]
+//按照 order 降序排序
+  "sort": [
+    {
+      "age": {
+        "order": "desc"
+      }
+    }
+  ],
+//类似limit；从0开始取1条数据
+  "from": 0,
+  "size": 1
+}
+
+*****多条件精确查询*****
+	must (and),所有条件都要符合   where id = 1 and name = xxx
+	should(or),符合任意一个条件即可；    or
+	must_not(not)  ;反向查询
+GET xm/user/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "match": {
+            "name": "李四"
+          }
+        },
+        {
+          "match": {
+            "age": "30"
+          }
+        }
+      ]
+    }
+  }
+}
+//添加过滤器查询
+GET xm/user/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "match": {
+            "name": "李四"
+          }
+        }
+      ],
+      "filter": [
+        {
+          "range": {
+            "age": {
+              "lt": 10
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+//精确查询  term 查询是直接通过倒排序索引指定的词条进行精确查找的
+	关于分词：
+		term，直接查询精确的
+		match，会使用分词器解析！（先分析文档，然后再通过分析的文档进行查询）
+	两个类型：text,keyword
+GET _analyze
+{
+  "analyzer": "keyword",
+  "text": "张三说Java name"
+}
+//默认被分析了
+GET _analyze
+{
+  "analyzer": "standard",
+  "text": "张三说Java name"
+}
+//高亮查询
+GET xm/user/_search
+{
+  "query": {
+    "match": {
+      "name": "李四"
+    }
+  },
+  "highlight": {
+    "pre_tags": "<p kp class-'key' style-'color:red'>",
+    "post_tags": "</p>", 
+    "fields": {
+      "name": {}
+    }
+  }
+}

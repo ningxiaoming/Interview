@@ -1,0 +1,153 @@
+一：基础问题：
+	1.接口幂等性：
+		一个操作多次执行产生的结果与一次执行产生的结果一致
+		确保接口幂等性解决办法（待续）：接口校验的原则（请求的合法性,参数的正确性等）应该是前后端一起做的
+	2.集合框架(后面补充其他)：
+		1>ArrayList不是线程安全的（add方法中的elementData[size++] = e不是一个原子操作，
+			add也不是原子操作，ensureCapacityInternal(size +1)），创建ArrayList对象时长度为0，
+			当第一次添加时初始化长度为10，之后add超过当前数组长度的话进行1.5倍扩容。
+			ArrayList:基于动态数组实现，LinkedList：基于链表实现（根据数组和链表的特征，谈论这两个的特点）。
+		2>HashMap
+			1>关于线程安全：HashMap是线程不安全的，HashTable是线程安全的；HashTable中的所有的方法都使用了synchronize关键字。
+			2>HashMap可以使用null作为key。
+			3>HashMap的初始容量与扩容：HashMap的初始容量是16，HashTable的初始容量是1，两者的填充因子都是0.75;
+									   HashMap扩容时是当前容量的翻倍：capacity*2；HashTable扩容时是容量翻倍+1：capacity*2+1;
+			4>HashMap的底层实现jdk1.8之前是由数组和链表来实现对数据的存储。首先是个Entry(包括hash，key，value和next)链表，
+			  将链表的头存放到数组中，后面的以链表存储。
+			  jdk1.8之后使用数组+链表+红黑树实现。当链表的长度超过8，就会将链表转换为红黑树。
+			  https://blog.csdn.net/qq_41345773/article/details/92066554
+		3>HashSet
+			基于HashMap实现；使用HashMap的key作为HashSet的值进行存储。
+二：框架问题：
+	1.spring的优缺点：https://blog.csdn.net/mrxuchen/article/details/79766684
+		1>spring提供的核心组件：
+			1.容器核心组件，beans(表示的是对spring以及所有bean对象的管理)，
+			2.core(包含了最底层的开发支持，例如：依赖的注入关系，资源文件的访问，数据类型的转换)，
+			3.context(提供的是一个完整的容器上下文，在这个上下文可以处理对象生命周期或者是事务)；
+		2>切面编程：
+			Spring中使用AspectJ注解和XML配置两种方式实现AOP，aop是整个spring的灵魂所在，利用切面编程来解决所有的辅助性操作，例如关闭数据库，事务操作。
+		3>数据访问模块：
+			在整个java之中，对于数据库的操作只有jdbc一种操作形式，所以在spring里面也提供有专门的ormmapping框架，这个框架就利用jdbc半原生完成，
+			1>orm:spring提供的ormmapping框架的处理操作，可以方便的整个hibernate，mybatis等常见组件。
+			2>oxm:提供了一个对象与xml文件之间的互相转换。
+			3>transactions:表示在数据访问模块支持了事务的操作处理。
+		4>web支持模式
+			mvc:spring提供有自己的mvc实现（是目前最好的一种）
+			spring方便的支持了struts2的管理
+			spring可以自己负责处理mvc的servlet程序类。
+			spring完全承办了一个项目，能够独立开发，并且可以容纳其他框架同时存在的综合性框架，spring控制层，数据层都可以负责。
+			
+		总结：spring中避免了关键字new造成的耦合问题。
+			  spring本身就是一个工厂，不需要再编写工厂类了。
+			  spring不需要进行明确的引用关系的传递，直接通过配置完成。
+			  所有框架几乎都可以在spring中整合在一起使用。
+			  spring编程=factory设计模式+proxy设计模式
+	缺点：1.本来是一个轻量级的框架，却给人感觉大而全，spring核心就是ioc和aop，这两个核心服务的对象就是那一堆beans，
+			spring可以理解为就是用来存放这些bean的容器。
+		  2.ioc干嘛的？就是为了让开发者的中心放在如何使用这些bean，不用关心bean是怎么来的，只要@Autowired就老老实实出现，让开发者调用接口，
+			不需要每次使用前都手动构建。springboot出现之前都是在xml中进行注册bean，springboot的话只需要在Configuration中定义一个@bean方法即可
+			就为了做好这件事情，spring弄了：BeanDefinitation,BeanFactory,FactoryBean；然后Bean的生命周期接口好几个。等等！
+		  3.aop：aop是很好的特性，在spring中其主要目的就是以一种非侵入的方式对bean进行扩展。又是对bean的支持。
+			为了对bean的支持，spring弄了一套AspctJ的子集，既有java原生的接口代理，又有更加灵活的Cglib。
+	2.过滤器：
+	  springcloud的zuul组件中的zuulFilter接口中有四个方法：shouldFilter(),run(),filterType(),fileterOrder();
+	  shouldFilter:是否执行该过滤器，true执行，false不执行；用来控制一些接口的权限。
+	  run：过滤器的具体业务逻辑，可以用来验证token是否过期，是否合法的一些操作
+	  filterType:返回过滤器的类型。
+		一共有四种：
+			1.pre：请求再被路由之前执行
+			2.routing：在路由请求时调用
+			3.post：在routing和error过滤器之后调用
+			4.error：调用错误
+	  filterOrder：过滤器的执行顺序，数字越小优先级越高，且该值不可重复。
+三：数据库相关知识
+	1.子查询和连接查询：
+		子查询最终也是被mysql编译器优化成了连接查询，有的子查询会生成了临时表，如果数据量大的话影响效率，所以连接查询更快。
+	2.mysql的索引分类：
+		（普通索引，唯一索引，主键索引，组合索引，全文索引）；
+	3.为什么有了主键索引，还要有唯一索引?
+		主键索引是对表中的主键所建立的索引，唯一索引是对表中不重复的某一列创建的索引，
+		唯一索引是用来对表中允许有null的，主键不允许；主键创建后一定包含一个索引，唯一索引并不一定是主键索引。
+	4.组合索引问题：
+		组合索引是多列值组成一个索引，用于组合搜索，效率高于索引合并。
+	5.b+tree：
+		b+tree数据结构一般是三层，最底层的页用来存储已经排好序的数据（在mysql中称为：数据页），
+		第二层用来存储数据页的第一条数据的索引（在mysql中称为数据的索引页），
+		第一层用来存储数据的索引页的第一个索引（在mysql中称为索引的索引页）。
+		mysql中InnoDB引擎中页的概念：Page是Innodb存储的最基本结构，也是Innodb磁盘管理的最小单位，
+		与数据库相关的所有内容都存储在Page结构里。
+四：中间件（redis，mq之类的）
+	1.redis：
+		1>redis的5大基本数据类型：字符串（String）， 散列（Hash）（和map集合类似）， 列表（List）， 集合（Set）， 有序集合（Zset）
+			1>String的一些操作：setnx (set if not exist) 不存在再设置 （在分布式锁中会常常使用！）
+			2>List的一些操作：list可以玩成 ，栈、队列、阻塞队列，基于链表的数据结构实现。
+			3>hash更适合存储对象类的数据；例如：hset user_1 id 1 name 张三 age 16 sex 1，hset user_2 id 2 name 李四 age 16 sex 1
+			4>Zset的操作：zadd salary 2500 xiaohong，可以根据某个字段排序
+		2>redis的三个特殊数据类型：地理空间（Geospatial），基数统计（Hyperloglog），位存储(Bitmap)。
+			1>Geospatial：用于用户定位，附近人，打车距离计算。底层实现是由Zset。
+				api：添加geoadd china:city 116 .40 39 .90 beijing，
+					 获取GEOPOS china:city beijing
+					 计算两点之间的距离GEODIST china:city beijing shanghai km
+					 查询以某点为圆点，以1000km为半径中的所有的人GEORADIUS china:city 110 30 1000 km
+					 用Zset命令来操作geo：ZRANGE china:city 0 -1
+			2>节省内存，只占用固定内存12k。有0.81%的错误率，一般用来统计网页的UV(一个人访问一个网站多少次)这种不重要的数据。
+			3>Bitmaps:统计用户信息（交集，并集等），活跃，不活跃！ 登录 、 未登录！ 打卡， 365 打卡！ 两个状态的，都可以使用。
+		3>redis事务：
+			1>概念：Redis 事务本质：一组命令的集合！ 一个事务中的所有命令都会被序列化，在事务执行过程的中，
+					会按照顺序执行！一次性、顺序性、排他性！执行一些列的命令！Redis事务没有没有隔离级别的概念！所有的命令在事务中，
+					并没有直接被执行！只有发起执行命令(Exec)的时候才会执行！。Redis单条命令式保存原子性的，但是事务不保证原子性！
+			2>事务的具体操作：开启事务（multi）命令入队（......）执行事务（exec）；取消事务（DISCARD）。
+			3>悲观锁：认为什么时候都会出现问题，无论做什么都要加锁，乐观锁：认为什么时候都不会出现问题，所以不会上锁，更新数据的时候
+					  去判断一下，在此期间是否有人修改数据。获取version，更新的时候比较version。
+					  redis中使用watch关键字来进行监控，watch可以作为redis的乐观锁来使用。
+					  如果使用watch监控了某个key，在执行之前其他线程修改了这个key的值，那么执行就会执行失败。
+					  需要先解锁(UNWATCH),重新监控(watch)。
+			4>jedis,api使用。
+			5>redis持久化：RDB(redis DataBase)概念：在指定的时间间隔内将内存中的数据集快照写入磁盘，也就是行话将的Snapshot快照，
+							   它恢复时是将快照文件直接读到内存里。
+							   过程：Redis会单独创建(fork)一个子进程来进行持久化，会先将数据写入到一个临时文件中，待持久化过程都结束了，
+							   再用这个临时文件替换上次持久化好的文件(dump.rdb)。整个过程中，主进程是不进行任何IO操作的。这就确保了极高的性能，
+							   如需要进行大规模数据的恢复，且对于数据恢复的完整性不是非常敏感，那么RDB比AOF方式更加的高效。
+							   触发rdb机制：1.满足配置文件中的save的规则，2.执行flushall，3.退出redis。都会生成dump.rdb.	
+						    AOF(Append Only File)概念：将我们所操作过的所有命令都记录下来。history，恢复的时候把这个文件全部执行一遍。
+								以日志的形式来记录每个写操作，将Redis执行过的所有命令记录下来(读操作不记录)，只允许追加文件，单不可以
+								改写文件，redis启动之初会读取该文件重新构建数据，换言之，redis重启的话就根据日志文件的内容将写指令从前
+								到后执行一次以完成数据的恢复工作。
+								AOF保存的是appendonly.aof文件。默认不开启的，redis-check-aof --fix 用来修复appendonly.aof文件。
+								aof文件大于64m，会将此文件进行重写。
+							rdb快，但是会丢失最后一次保存的数据，aof慢，但是会保证数据不丢失。
+			6>redis缓存穿透，缓存击穿和缓存雪崩：
+				1.缓存穿透(查不到)：查询一个不存在的数据，导致数据库一直遍历查询
+					解决方案：1.布隆过滤器：布隆过滤器是一种数据结构，对所有可能查询的参数以hash形式存储，在控制层进行校验
+								不符合规则则丢弃，从而避免了对底层存储系统的查询压力。
+							  2.缓存空对象：当存储层没有命中后，即使返回的空对象也将其缓存起来，同时设置过期时间，之后再访问这个
+								数据将会从缓存中获取，保护了后端数据源。
+				2.缓存击穿(请求量太大，缓存过期)：某个热点数据过期，然后大请求量都去数据库访问造成。
+					解决方案：1.设置热点数据永不过期。
+							  2.加互斥锁：使用分布式锁，保证对于每个key只有一个线程去查询。
+				3.缓存雪崩：缓存集中过期，redis宕机。
+					解决方案：1.redis高可用，搭建集群
+							  2.限流降级：实现思想(加锁或者使用队列完成)
+							  3.数据预热：将预估的数据先加到缓存中。
+	2.(搜索引擎)ES：
+	3.(消息中间件)MQ：
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	

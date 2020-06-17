@@ -1,7 +1,12 @@
 一：基础问题：
-	1.接口幂等性：
+	1.接口幂等性：（用来解决重复提交的问题的）
 		一个操作多次执行产生的结果与一次执行产生的结果一致
 		确保接口幂等性解决办法（待续）：接口校验的原则（请求的合法性,参数的正确性等）应该是前后端一起做的
+            保持接口幂等性的方案：1.token机制：客户端在请求接口的时候先向服务端申请一个token，服务端存在redis缓存中（单次有效），
+                                  并设置时间，然后客户端带着token去请求接口，后端对token进行校验。校验成功完成后的后续续操作完成后删除
+                                  token。可以解决重复提交的问题。
+                                2.分布式锁：在执行某段流程之前，根据某个标志（如：id）获取分布式锁，保证了同一时刻只有一个能被执行。
+                                3.在数据库添加唯一索引。
 	2.集合框架(后面补充其他)：
 		1>ArrayList不是线程安全的（add方法中的elementData[size++] = e不是一个原子操作，
 			add也不是原子操作，ensureCapacityInternal(size +1)），创建ArrayList对象时长度为0，
@@ -42,13 +47,22 @@
 			  spring不需要进行明确的引用关系的传递，直接通过配置完成。
 			  所有框架几乎都可以在spring中整合在一起使用。
 			  spring编程=factory设计模式+proxy设计模式
-	缺点：1.本来是一个轻量级的框架，却给人感觉大而全，spring核心就是ioc和aop，这两个核心服务的对象就是那一堆beans，
+	2.缺点：1.本来是一个轻量级的框架，却给人感觉大而全，spring核心就是ioc和aop，这两个核心服务的对象就是那一堆beans，
 			spring可以理解为就是用来存放这些bean的容器。
-		  2.ioc干嘛的？就是为了让开发者的中心放在如何使用这些bean，不用关心bean是怎么来的，只要@Autowired就老老实实出现，让开发者调用接口，
+		  2.ioc干嘛的？就是为了让开发者的重心放在如何使用这些bean，不用关心bean是怎么来的，只要@Autowired就老老实实出现，让开发者调用接口，
 			不需要每次使用前都手动构建。springboot出现之前都是在xml中进行注册bean，springboot的话只需要在Configuration中定义一个@bean方法即可
 			就为了做好这件事情，spring弄了：BeanDefinitation,BeanFactory,FactoryBean；然后Bean的生命周期接口好几个。等等！
 		  3.aop：aop是很好的特性，在spring中其主要目的就是以一种非侵入的方式对bean进行扩展。又是对bean的支持。
 			为了对bean的支持，spring弄了一套AspctJ的子集，既有java原生的接口代理，又有更加灵活的Cglib。
+		  4.AOP 思想： 基于代理思想，对原来目标对象，创建代理对象，在不修改原对象代码情况下，
+			通过代理对象，调用增强功能的代码，从而对原有业务方法进行增强 ！
+	3.spring的事务：
+        一：事务的特性：1.原子性（强调事务的不可分割），2.一致性（事务的执行的前后数据的完整性保持一致）。
+                      3.隔离性（一个事务执行的过程中，不应该受到其他事务的干扰），4.持久性（事务一旦结束，数据就持久到数据库中）。
+	    1>REQUIRED:如果有事务则加入事务，如果没有事务，则创建一个新的（默认值）;
+	    2>NOT_SUPPORTED:Spring不为当前方法开启事务，相当于没有事务;
+	    3>REQUIRES_NEW:不管是否存在事务，都创建一个新的事务，原来的方法挂起，新的方法执行完毕后，继续执行老的事务;
+	    4.。。。。。
 	2.过滤器：
 	  springcloud的zuul组件中的zuulFilter接口中有四个方法：shouldFilter(),run(),filterType(),fileterOrder();
 	  shouldFilter:是否执行该过滤器，true执行，false不执行；用来控制一些接口的权限。
@@ -60,6 +74,34 @@
 			3.post：在routing和error过滤器之后调用
 			4.error：调用错误
 	  filterOrder：过滤器的执行顺序，数字越小优先级越高，且该值不可重复。
+	3.mybatis:
+	    1>mybatis的一二级缓存：
+	        1>一级缓存：一级缓存是sqlSession级别的缓存，在操作数据库时需要构建sqlSession对象，在对象中有一个数据结构(HashMap),
+	          用于存储缓存数据，不同的sqlSession之间的缓存数据区域(HashMap)是互相不影响的。在执行条件一致的sql的时候，
+	          直接在缓存中取，有对数据库的更新操作，会清除这个缓存。
+	        2>二级缓存：二级缓存是mapper级别(mapper文件的namespace)的缓存，多个sqlSession去操作同一个Mapper的sql语句。
+	                   多个sqlSession可以共用二级缓存，二级缓存是跨sqlSession。useCache是用来设置是否禁用二级缓存的
+	                   ,false禁用；flushCache默认true，即执行更新操作之后刷新缓存。
+	4.springMVC:
+	    1>执行流程：1.前端发起request url请求到前端控制器DispatcherServlet
+	               2.前端控制器请求HandlerMapping查找Handler（根据xml配置、注解进行查找）
+	               3.处理器映射器HandlerMapping向前端控制器返回Handler，HandlerMapping会吧请求映射为HandlerExecutionChain对象(包含
+	               一个Handler处理器(页面控制器)对象，多个HandlerIntercept拦截器对象)，通过这种策略模式，很容易添加新的映射策略。
+	               4.前端控制器调用处理器适配器去执行Handler
+	               5.处理器适配器会根据HandlerAdapter会根据适配的结果去执行Handler。
+	               6.Handler执行完成给适配器返回ModeAndView。
+	               7.处理器适配器向前端控制器返回ModeAndView。
+	               。。。
+	    2>详细介绍上述用到的组件；
+	               1.前端控制器DispatcherServlet
+	                    作用：接收请求，响应结果，相当于转发器，中央处理器；减少其他组件的耦合度。
+	               2.处理器映射器HandlerMapping
+	                    作用：根据请求的url查找Handler
+	               3.处理器适配器HandlerAdapter
+	                    作用：按照特点的规则去执行Handler（HandlerAdapter要求的规则）
+	               4.处理器Handler
+	                    作用：对应的controller中的方法。按照业务编写即可。
+	               5.。。。。
 三：数据库相关知识
 	1.子查询和连接查询：
 		子查询最终也是被mysql编译器优化成了连接查询，有的子查询会生成了临时表，如果数据量大的话影响效率，所以连接查询更快。
@@ -71,6 +113,11 @@
 	4.组合索引问题：
 		组合索引是多列值组成一个索引，用于组合搜索，效率高于索引合并。
 	5.b+tree：
+	    1.b+tree数据结构只有叶子结点会存储数据，其他结点存储数据的索引，或者索引的索引。
+	    2.b+tree的叶子结点的数据是顺序排列的，并且相邻结点(page)具有顺序引用的关系
+	    3.b+tree插入、删除、修改操作可能会导致树不平衡，为了保持平衡，进行树的旋转，会对性能有影响，
+	        所以一些经常有删除，修改的字段不适合建立索引。
+
 		b+tree数据结构一般是三层，最底层的页用来存储已经排好序的数据（在mysql中称为：数据页），
 		第二层用来存储数据页的第一条数据的索引（在mysql中称为数据的索引页），
 		第一层用来存储数据的索引页的第一个索引（在mysql中称为索引的索引页）。
@@ -132,7 +179,11 @@
 	2.(搜索引擎)ES：
 	3.(消息中间件)MQ：
 	
-	
+五：扩展问题
+    1.设计一个秒杀系统的方案
+
+
+
 	
 	
 	

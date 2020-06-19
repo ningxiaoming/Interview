@@ -1,3 +1,4 @@
+/*
 package com.nxm.spring_lecture.config;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -25,3 +26,4 @@ public class MyConfigBean {
         return myAge;
     }
 }
+*/

@@ -1,4 +1,4 @@
-package com.example.boot_redis.pojo;
+package com.example.boot_redis.jedis;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -6,7 +6,6 @@ import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 
 @Component
 @AllArgsConstructor

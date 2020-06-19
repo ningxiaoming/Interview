@@ -1,3 +1,4 @@
+/*
 package com.nxm.spring_lecture.controller;
 
 
@@ -30,3 +31,4 @@ public class MyController {
         return user;
     }
 }
+*/

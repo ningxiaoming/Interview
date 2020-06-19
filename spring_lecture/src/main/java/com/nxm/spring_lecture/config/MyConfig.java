@@ -1,3 +1,4 @@
+/*
 package com.nxm.spring_lecture.config;
 
 import org.springframework.context.annotation.Bean;
@@ -11,3 +12,4 @@ public class MyConfig {
         return new MyConfigBean();
     }
 }
+*/

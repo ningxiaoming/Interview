@@ -2,11 +2,15 @@ package com.example.boot_redis.jedis;
 
 import redis.clients.jedis.Jedis;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
 public class TestHash {
     public static void main(String[] args) {
+
+        new ArrayList<>();
+
         Jedis jedis = new Jedis("127.0.0.1", 6379);
         jedis.flushDB();
         Map<String,String> map = new HashMap<>();

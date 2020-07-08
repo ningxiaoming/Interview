@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 
+import java.util.ArrayList;
 import java.util.Objects;
 
 @Configuration
@@ -80,6 +81,9 @@ public class RabbitmqConfig {
     }
     public DirectExchange logUserExchange(){
         return new DirectExchange(env.getProperty("log.user.exchange.name"),true,false);
+
+
+
     }
 
     @Bean

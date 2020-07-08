@@ -7,6 +7,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletWebRequest;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
 
 @RestController
 public class HttpTestController {
@@ -40,6 +41,10 @@ public class HttpTestController {
     }
 
     public static void httpGetTest3() throws InterruptedException {
+
+        ArrayList<String> list = new ArrayList<String>();
+        list.add("1");
+
         System.out.println("========================");
         Thread.sleep(20000);
         System.out.println("123");

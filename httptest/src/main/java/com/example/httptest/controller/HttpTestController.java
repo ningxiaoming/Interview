@@ -16,20 +16,19 @@ public class HttpTestController {
     private static String string = "123";
 
     @GetMapping("/http")
-    public String httpGetTest(HttpServletResponse response){
-//        HttpServletResponse resp = ((ServletWebRequest) RequestContextHolder.getRequestAttributes()).getResponse();
-        response.setHeader("Cache-Control","max-age=1200");
-//        response.setDateHeader("expries", System.currentTimeMillis() + 1000 * 3600);
-        response.setHeader("last-modified","Fri, 03 Jul 2020 02:13:21 GMT");
-        response.setHeader("expires","Fri, 03 Jul 2020 02:33:21 GMT");
-        return string;
+    public String httpGetTest(String str) throws InterruptedException {
+
+        System.out.println(Thread.currentThread().getName()+"Runing");
+        Thread.sleep(5000);
+
+        return str;
     }
 
     @GetMapping("/http1")
-    public String httpGetTest1() throws InterruptedException {
-        string = "888";
+    public String httpGetTest1(String str) throws InterruptedException {
+//        string = "888";
         httpGetTest3();
-        return string;
+        return str;
     }
 
     @GetMapping("/http2")

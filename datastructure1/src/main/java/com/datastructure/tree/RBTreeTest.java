@@ -1,5 +1,6 @@
 package com.datastructure.tree;
 
+import java.util.HashMap;
 import java.util.Scanner;
 
 public class RBTreeTest {
